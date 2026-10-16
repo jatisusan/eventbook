@@ -1,14 +1,45 @@
- "use client";
+"use client";
 
+import api from "@/lib/axios";
+import axios from "axios";
+import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { refreshUser } = useAuth();
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.SubmitEvent) => {
     event.preventDefault();
+
+    setIsLoading(true);
+
+    try {
+      const response = await api.post("/auth/login", {
+        email,
+        password,
+      });
+
+      await refreshUser();
+      toast.success(response.data.message || "Login successful.");
+      router.push("/");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        toast.error(
+          error.response?.data?.message || "Login failed. Please try again.",
+        );
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -47,9 +78,10 @@ const LoginPage = () => {
 
         <button
           type="submit"
+          disabled={isLoading}
           className="w-full rounded-lg bg-[#276749] px-4 py-3 font-semibold text-white transition hover:bg-[#1F5139]"
         >
-          Log in
+          {isLoading ? "Logging in..." : "Log in"}
         </button>
       </form>
 

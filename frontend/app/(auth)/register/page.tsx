@@ -1,15 +1,46 @@
 "use client";
 
+import api from "@/lib/axios";
+import axios from "axios";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 const RegisterPage = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (event: React.SubmitEvent) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const handleSubmit = async (event: React.SubmitEvent) => {
     event.preventDefault();
+
+    setIsLoading(true);
+
+    try {
+      const response = await api.post("/auth/register", {
+        name,
+        email,
+        password,
+      });
+
+      toast.success(response.data.message || "Account created successfully.");
+      router.push("/login");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        toast.error(
+          error.response?.data?.message ||
+            "Registration failed. Please try again.",
+        );
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -60,9 +91,10 @@ const RegisterPage = () => {
 
         <button
           type="submit"
+          disabled={isLoading}
           className="w-full rounded-lg bg-[#276749] px-4 py-3 font-semibold text-white transition hover:bg-[#1F5139]"
         >
-          Create account
+          {isLoading ? "Creating account..." : "Create account"}
         </button>
       </form>
 
