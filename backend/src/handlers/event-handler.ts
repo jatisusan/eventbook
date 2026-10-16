@@ -23,12 +23,27 @@ export const listEventsHandler = async (
       orderBy: {
         startsAt: "asc",
       },
+      include: {
+        _count: {
+          select: {
+            bookings: {
+              where: { status: "CONFIRMED" },
+            },
+          },
+        },
+      },
     });
+
+    const eventsWithSeatsLeft = events.map((event) => ({
+      ...event,
+      seatsLeft: event.totalSeats - event._count.bookings,
+      _count: undefined,
+    }));
 
     return res.status(200).json({
       success: true,
       message: "Events retrieved successfully.",
-      data: events,
+      data: eventsWithSeatsLeft,
     });
   } catch (error) {
     next(error);
@@ -45,6 +60,15 @@ export const getEventByIdHandler = async (
 
     const event = await prisma.event.findUnique({
       where: { id },
+      include: {
+        _count: {
+          select: {
+            bookings: {
+              where: { status: "CONFIRMED" },
+            },
+          },
+        },
+      },
     });
 
     if (!event) {
@@ -54,10 +78,16 @@ export const getEventByIdHandler = async (
       });
     }
 
+    const eventWithSeatsLeft = {
+      ...event,
+      seatsLeft: event.totalSeats - event._count.bookings,
+      _count: undefined,
+    };
+
     return res.status(200).json({
       success: true,
       message: "Event retrieved successfully.",
-      data: event,
+      data: eventWithSeatsLeft,
     });
   } catch (error) {
     next(error);
@@ -166,6 +196,26 @@ export const updateEventHandler = async (
       });
     }
 
+    if (
+      result.data.totalSeats !== undefined &&
+      result.data.totalSeats < existingEvent.totalSeats
+    ) {
+      const confirmedBookings = await prisma.booking.count({
+        where: {
+          eventId: id,
+          status: "CONFIRMED",
+        },
+      });
+
+      if (result.data.totalSeats < confirmedBookings) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Total seats cannot be less than the number of confirmed bookings.",
+        });
+      }
+    }
+
     const event = await prisma.event.update({
       where: { id },
       data: {
@@ -225,6 +275,54 @@ export const deleteEventHandler = async (
       });
     }
 
-    return next(error);
+    next(error);
+  }
+};
+
+export const listEventBookingsHandler = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { id } = req.params;
+
+    const event = await prisma.event.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Event not found.",
+      });
+    }
+
+    const bookings = await prisma.booking.findMany({
+      where: { eventId: id },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        status: true,
+        createdAt: true,
+        cancelledAt: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Bookings retrieved successfully.",
+      data: bookings,
+    });
+  } catch (error) {
+    next(error);
   }
 };

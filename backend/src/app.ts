@@ -7,6 +7,7 @@ import { config } from "./config.js";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
 import authRouter from "./routes/auth-route.js";
 import eventRouter from "./routes/event-routes.js";
+import bookingRouter from "./routes/booking-route.js";
 
 export const app = express();
 
@@ -22,6 +23,7 @@ app.use(cookieParser());
 
 app.use("/api/auth", authRouter);
 app.use("/api/events", eventRouter);
+app.use("/api/bookings", bookingRouter);
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });

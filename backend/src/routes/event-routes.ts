@@ -4,6 +4,7 @@ import {
   createEventHandler,
   deleteEventHandler,
   getEventByIdHandler,
+  listEventBookingsHandler,
   listEventsHandler,
   updateEventHandler,
 } from "../handlers/event-handler.js";
@@ -15,6 +16,12 @@ import {
 const eventRouter = Router();
 
 eventRouter.get("/", listEventsHandler);
+eventRouter.get(
+  "/:id/bookings",
+  authMiddleware,
+  adminMiddleware,
+  listEventBookingsHandler,
+);
 eventRouter.get("/:id", getEventByIdHandler);
 eventRouter.post("/", authMiddleware, adminMiddleware, createEventHandler);
 eventRouter.patch("/:id", authMiddleware, adminMiddleware, updateEventHandler);
