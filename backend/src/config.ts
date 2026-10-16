@@ -10,10 +10,21 @@ const parsePort = (value: string | undefined): number => {
   return port;
 };
 
+const parseJwtSecret = (value: string | undefined): string => {
+  if (!value) {
+    throw new Error(
+      "JWT_SECRET must be configured",
+    );
+  }
+
+  return value;
+};
+
 export const config = {
   port: parsePort(process.env.PORT),
   corsOrigins: (process.env.CORS_ORIGIN ?? "http://localhost:3000")
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean),
+  jwtSecret: parseJwtSecret(process.env.JWT_SECRET),
 };
