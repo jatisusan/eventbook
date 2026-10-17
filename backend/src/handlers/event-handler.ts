@@ -15,11 +15,6 @@ export const listEventsHandler = async (
 ) => {
   try {
     const events = await prisma.event.findMany({
-      where: {
-        startsAt: {
-          gte: new Date(),
-        },
-      },
       orderBy: {
         startsAt: "asc",
       },

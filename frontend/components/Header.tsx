@@ -38,6 +38,22 @@ const Header = () => {
                 <span className="hidden text-sm text-gray-600 sm:block">
                   {user.name}
                 </span>
+                {user.role === "USER" && (
+                  <Link
+                    href="/bookings"
+                    className="hidden px-3 py-2 text-sm font-semibold hover:text-[#276749] sm:block"
+                  >
+                    My Bookings
+                  </Link>
+                )}
+                {user.role === "ADMIN" && (
+                  <Link
+                    href="/admin/events"
+                    className="hidden px-3 py-2 text-sm font-semibold hover:text-[#276749] sm:block"
+                  >
+                    Manage Events
+                  </Link>
+                )}
                 <button
                   type="button"
                   onClick={handleLogout}
