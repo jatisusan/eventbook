@@ -18,8 +18,16 @@ export const listEventsHandler = async (
     const limit = Number(req.query.limit) || 3;
     const skip = (page - 1) * limit;
 
+    const search = String(req.query.search || "").trim();
+
     const [events, totalEvents] = await Promise.all([
       prisma.event.findMany({
+        where: {
+          title: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
         skip,
         take: limit,
         orderBy: { startsAt: "asc" },
@@ -33,7 +41,14 @@ export const listEventsHandler = async (
           },
         },
       }),
-      prisma.event.count(),
+      prisma.event.count({
+        where: {
+          title: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+      }),
     ]);
 
     const eventsWithSeatsLeft = events.map((event) => ({

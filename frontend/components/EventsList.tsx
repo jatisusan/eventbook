@@ -10,6 +10,17 @@ const EventsList = () => {
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [search]);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -18,7 +29,7 @@ const EventsList = () => {
 
       try {
         const response = await api.get("/events", {
-          params: { page, limit: 3 },
+          params: { page, limit: 3, search: debouncedSearch },
         });
         setEvents(response.data.data);
         setTotalPages(response.data.totalPages);
@@ -30,7 +41,7 @@ const EventsList = () => {
     };
 
     loadEvents();
-  }, [page]);
+  }, [page, debouncedSearch]);
 
   return (
     <section id="events" className="bg-white px-5 py-16 sm:py-20">
@@ -45,6 +56,15 @@ const EventsList = () => {
           <p className="mt-3 text-gray-600">
             Find something worth looking forward to.
           </p>
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+            }}
+            placeholder="Search events by title..."
+            className="mt-6 w-full max-w-md rounded-lg border border-gray-300 px-3 py-2.5 outline-none transition focus:ring-2 focus:ring-[#276749]/20"
+          />
         </div>
 
         {isLoading && (
