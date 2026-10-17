@@ -14,6 +14,8 @@ const AdminEventsPage = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     if (isAuthLoading) {
@@ -35,8 +37,11 @@ const AdminEventsPage = () => {
       setError("");
 
       try {
-        const response = await api.get("/events");
+        const response = await api.get("/events", {
+          params: { page, limit: 3 },
+        });
         setEvents(response.data.data);
+        setTotalPages(response.data.totalPages);
       } catch {
         setError("Unable to load events. Please try again.");
       } finally {
@@ -45,7 +50,17 @@ const AdminEventsPage = () => {
     };
 
     void loadEvents();
-  }, [isAuthLoading, user]);
+  }, [isAuthLoading, page, user]);
+
+  const handleEventDeleted = (eventId: string) => {
+    setEvents((currentEvents) => {
+      if (currentEvents.length === 1 && page > 1) {
+        setPage(page - 1);
+      }
+
+      return currentEvents.filter((event) => event.id !== eventId);
+    });
+  };
 
   if (isAuthLoading || !user || user.role !== "ADMIN") {
     return (
@@ -88,7 +103,13 @@ const AdminEventsPage = () => {
         )}
 
         {!isLoading && !error && events.length > 0 && (
-          <EventTable events={events} />
+          <EventTable
+            events={events}
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            onEventDeleted={handleEventDeleted}
+          />
         )}
       </div>
     </main>

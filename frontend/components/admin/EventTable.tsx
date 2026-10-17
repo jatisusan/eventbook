@@ -7,8 +7,21 @@ import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-const EventTable = ({ events }: { events: Event[] }) => {
-  const [displayedEvents, setDisplayedEvents] = useState(events);
+type EventTableProps = {
+  events: Event[];
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  onEventDeleted: (eventId: string) => void;
+};
+
+const EventTable = ({
+  events,
+  page,
+  totalPages,
+  onPageChange,
+  onEventDeleted,
+}: EventTableProps) => {
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
 
@@ -21,9 +34,7 @@ const EventTable = ({ events }: { events: Event[] }) => {
 
     try {
       const response = await api.delete(`/events/${eventToDelete.id}`);
-      setDisplayedEvents((currentEvents) =>
-        currentEvents.filter((event) => event.id !== eventToDelete.id),
-      );
+      onEventDeleted(eventToDelete.id);
       setEventToDelete(null);
       toast.success(response.data.message || "Event deleted successfully.");
     } catch (requestError) {
@@ -50,7 +61,7 @@ const EventTable = ({ events }: { events: Event[] }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {displayedEvents.map((event) => (
+            {events.map((event) => (
               <tr key={event.id}>
                 <td className="px-5 py-4 font-semibold">{event.title}</td>
                 <td className="px-5 py-4 text-gray-600">
@@ -91,6 +102,27 @@ const EventTable = ({ events }: { events: Event[] }) => {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-8 flex justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => onPageChange(page - 1)}
+            disabled={page === 1}
+            className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold transition hover:border-[#276749] hover:text-[#276749] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            onClick={() => onPageChange(page + 1)}
+            disabled={page === totalPages}
+            className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold transition hover:border-[#276749] hover:text-[#276749] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {eventToDelete && (
         <div
