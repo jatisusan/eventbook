@@ -8,12 +8,20 @@ const EventsList = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     const loadEvents = async () => {
+      setIsLoading(true);
+      setError("");
+
       try {
-        const response = await api.get("/events");
+        const response = await api.get("/events", {
+          params: { page, limit: 3 },
+        });
         setEvents(response.data.data);
+        setTotalPages(response.data.totalPages);
       } catch {
         setError("Unable to load events. Please try again.");
       } finally {
@@ -21,8 +29,8 @@ const EventsList = () => {
       }
     };
 
-    void loadEvents();
-  }, []);
+    loadEvents();
+  }, [page]);
 
   return (
     <section id="events" className="bg-white px-5 py-16 sm:py-20">
@@ -52,15 +60,40 @@ const EventsList = () => {
         )}
 
         {!isLoading && !error && events.length === 0 && (
-          <p className="mt-8 text-gray-500">No upcoming events are available.</p>
+          <p className="mt-8 text-gray-500">
+            No upcoming events are available.
+          </p>
         )}
 
         {!isLoading && !error && events.length > 0 && (
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {events.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
+          <>
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {events.map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="mt-8 flex justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPage(page - 1)}
+                  disabled={page === 1}
+                  className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold transition hover:border-[#276749] hover:text-[#276749] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage(page + 1)}
+                  disabled={page === totalPages}
+                  className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold transition hover:border-[#276749] hover:text-[#276749] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>

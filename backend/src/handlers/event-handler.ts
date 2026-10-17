@@ -14,20 +14,27 @@ export const listEventsHandler = async (
   next: NextFunction,
 ) => {
   try {
-    const events = await prisma.event.findMany({
-      orderBy: {
-        startsAt: "asc",
-      },
-      include: {
-        _count: {
-          select: {
-            bookings: {
-              where: { status: "CONFIRMED" },
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 3;
+    const skip = (page - 1) * limit;
+
+    const [events, totalEvents] = await Promise.all([
+      prisma.event.findMany({
+        skip,
+        take: limit,
+        orderBy: { startsAt: "asc" },
+        include: {
+          _count: {
+            select: {
+              bookings: {
+                where: { status: "CONFIRMED" },
+              },
             },
           },
         },
-      },
-    });
+      }),
+      prisma.event.count(),
+    ]);
 
     const eventsWithSeatsLeft = events.map((event) => ({
       ...event,
@@ -39,6 +46,10 @@ export const listEventsHandler = async (
       success: true,
       message: "Events retrieved successfully.",
       data: eventsWithSeatsLeft,
+      page,
+      limit,
+      totalEvents,
+      totalPages: Math.ceil(totalEvents / limit),
     });
   } catch (error) {
     next(error);
