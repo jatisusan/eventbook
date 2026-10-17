@@ -27,6 +27,8 @@ const LoginPage = () => {
       });
 
       await refreshUser();
+      setEmail("");
+      setPassword("");
       toast.success(response.data.message || "Login successful.");
       router.push("/");
     } catch (error: unknown) {
